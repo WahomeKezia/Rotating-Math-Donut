@@ -20,6 +20,11 @@ K1 = screen_size * K2 * 3 / (8 * (R1 + R2))
 
 # Function to render the spinning donut
 def render_donut(A, B):
+    cos_A = np.cos(A)
+    sin_A = np.sin(A)
+    cos_B = np.cos(B)
+    sin_B = np.sin(B)
+
     output = np.full((screen_size, screen_size), " ")
     zbuffer = np.zeros((screen_size, screen_size))
 
@@ -60,7 +65,6 @@ def render_donut(A, B):
         output[xp[i], yp[i]] = np.where(mask, chars[i], output[xp[i], yp[i]])
 
     return output
-
 
 st.title("Spinning Donut")
 
