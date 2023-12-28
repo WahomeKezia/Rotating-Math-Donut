@@ -34,9 +34,11 @@ chars = ".,-~:;=!*#$@"
 pg.init()
 screen = pg.Surface((WIDTH, HEIGHT))
 
-@st.cache
+@st.cache(hash_funcs={pg.Surface: lambda _: None})
 def render_donut():
-    global A, B, hue
+    global A, B, hue, x_start, y_start  # Add global for y_start
+
+    y_start = 0  # Initialize y_start
 
     z = [0] * screen_size
     b = [' '] * screen_size
