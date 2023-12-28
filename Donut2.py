@@ -1,108 +1,107 @@
-import tkinter as tk
+import pygame as pg
 import math
+import colorsys
 
-A = 1
-B = 1
-R1 = 1
-R2 = 2
-K1 = 150
-K2 = 5
+pg.init()
 
-def asciiframe():
-    global A, B
-    b = [" "] * 1760
-    z = [0] * 1760
+white = (255, 255, 255)
+black = (0, 0, 0)
+hue = 0
 
-    A += 0.07
-    B += 0.03
+WIDTH = 1920
+HEIGHT = 1080
 
-    cA, sA = math.cos(A), math.sin(A)
-    cB, sB = math.cos(B), math.sin(B)
+x_start, y_start = 0, 0
 
-    for k in range(1760):
-        b[k] = "\n" if k % 80 == 79 else " "
-        z[k] = 0
+x_s = 10
+y_s = 20
 
-    for j in range(0, int(6.28), int(0.07 * 100)):
-        ct, st = math.cos(j / 100), math.sin(j / 100)
-        for i in range(0, int(6.28 * 100), int(0.02 * 100)):
-            sp, cp = math.sin(i / 100), math.cos(i / 100)
-            h = ct + 2
-            D = 1 / (sp * h * sA + st * cA + 5)
-            t = sp * h * cA - st * sA
+rows = HEIGHT // y_s
+columns = WIDTH // x_s
+screen_size = rows * columns
 
-            x = int(40 + 30 * D * (cp * h * cB - t * sB))
-            y = int(12 + 15 * D * (cp * h * sB + t * cB))
-            o = x + 80 * y
-            N = int(8 * ((st * sA - sp * ct * cA) * cB - sp * ct * sA - st * cA - cp * ct * sB))
+x_offset = columns / 2
+y_offset = rows / 2
 
-            if 0 <= y < 22 and 0 <= x < 79 and D > z[o]:
+# Rotating animation
+A, B = 0, 0
+
+theta_spacing = 10
+# We'll change phi_spacing later for faster rotation
+phi_spacing = 5
+
+# Brightness index
+chars = ".,-~:;=!*#$@"
+
+screen = pg.display.set_mode((WIDTH, HEIGHT))
+display_surface = pg.display.set_mode((WIDTH, HEIGHT))
+
+pg.display.set_caption('Spinning Donut')
+font = pg.font.SysFont('Arial', 18, bold=True)
+
+# Function to convert HSV to RGB
+def hsv2rgb(h, s, v):
+    return tuple(round(i * 255) for i in colorsys.hsv_to_rgb(h, s, v))
+
+# Function to display text
+def text_display(letter, x_start, y_start):
+    text = font.render(str(letter), True, hsv2rgb(hue, 1, 1))
+    display_surface.blit(text, (x_start, y_start))
+
+run = True
+while run:
+
+    screen.fill((black))
+
+    z = [0] * screen_size
+    b = [' '] * screen_size
+
+    for j in range(0, 628, theta_spacing):  # 0 to 2pi
+        for i in range(0, 628, phi_spacing):
+            c = math.sin(i)
+            d = math.cos(j)
+            e = math.sin(A)
+            f = math.sin(j)
+            g = math.cos(A)
+            h = d + 2
+            D = 1 / (c * h * e + f * g + 5)
+            l = math.cos(i)
+            m = math.cos(B)
+            n = math.sin(B)
+            t = c * h * g - f * e
+            # This is for 3D coordinate x after rotation
+            x = int(x_offset + 40 * D * (l * h * m - t * n))
+            # This is for 3D coordinate y after rotation
+            y = int(y_offset + 20 * D * (l * h * n + t * m))
+            o = int(x + columns * y)
+            N = int(8 * ((f * e - c * d * g) * m - c * d * e - f * g - l * d * n))  # Brightness index
+            if rows > y and y > 0 and x > 0 and columns > x and D > z[o]:
                 z[o] = D
-                b[o] = ".,-~:;=!*#$@"[N if N > 0 else 0]
+                b[o] = chars[N if N > 0 else 0]
 
-    pretag.config(text="".join(b))
-    root.after(50, asciiframe)
+    if y_start == rows * y_s - y_s:
+        y_start = 0
 
-def canvasframe():
-    global A, B
-    if tmr1 is None:
-        A += 0.07
-        B += 0.03
+    for i in range(len(b)):
+        # For faster rotation, change the value to a higher one.
+        A += 0.00004
+        B += 0.00002
+        if i == 0 or i % columns:
+            text_display(b[i], x_start, y_start)
+            x_start += x_s
+        else:
+            y_start += y_s
+            x_start = 0
+            text_display(b[i], x_start, y_start)
+            x_start += x_s
 
-    cA, sA = math.cos(A), math.sin(A)
-    cB, sB = math.cos(B), math.sin(B)
+    pg.display.update()
 
-    canvas.delete("all")
-    canvas.create_rectangle(0, 0, canvas.winfo_width(), canvas.winfo_height(), fill='#000')
+    hue += 0.005
 
-    for j in range(0, int(6.28 * 100), int(0.3 * 100)):
-        ct, st = math.cos(j / 100), math.sin(j / 100)
-        for i in range(0, int(6.28 * 100), int(0.1 * 100)):
-            sp, cp = math.sin(i / 100), math.cos(i / 100)
-            ox = R2 + R1 * ct
-            oy = R1 * st
-
-            x = int(ox * (cB * cp + sA * sB * sp) - oy * cA * sB)
-            y = int(ox * (sB * cp - sA * cB * sp) + oy * cA * cB)
-            ooz = 1 / (K2 + cA * ox * sp + sA * oy)
-            xp = int(150 + K1 * ooz * x)
-            yp = int(120 - K1 * ooz * y)
-
-            L = 0.7 * (cp * ct * sB - cA * ct * sp - sA * st + cB * (cA * st - ct * sA * sp))
-            if L > 0:
-                canvas.create_rectangle(xp, yp, xp + 1.5, yp + 1.5, fill=f'rgba(255,255,255,{L})')
-
-    root.after(50, canvasframe)
-
-def anim1():
-    global tmr1
-    if tmr1 is None:
-        tmr1 = True
-        asciiframe()
-
-def anim2():
-    global tmr2
-    if tmr2 is None:
-        tmr2 = True
-        canvasframe()
-
-root = tk.Tk()
-root.title("ASCII and Canvas Animation")
-
-pretag = tk.Label(root, font=("Courier", 8), justify=tk.LEFT)
-pretag.pack()
-
-canvas = tk.Canvas(root, width=320, height=240)
-canvas.pack()
-
-tmr1 = None
-tmr2 = None
-
-ascii_button = tk.Button(root, text="Toggle ASCII Animation", command=anim1)
-ascii_button.pack()
-
-canvas_button = tk.Button(root, text="Toggle Canvas Animation", command=anim2)
-canvas_button.pack()
-
-root.protocol("WM_DELETE_WINDOW", root.destroy)
-root.mainloop()
+    for event in pg.event.get():
+        if event.type == pg.QUIT:
+            run = False
+        if event.type == pg.KEYDOWN:
+            if event.key == pg.K_ESCAPE:
+                run = False
